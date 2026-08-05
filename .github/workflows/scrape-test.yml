@@ -1,0 +1,37 @@
+name: Scrape test (does Facebook allow an Actions runner?)
+
+# Manual-only for now. This is a probe: it runs the scraper from a GitHub-hosted
+# (datacenter IP) runner and uploads the run summary so we can see whether Facebook
+# served real listings or threw a login wall / CAPTCHA. If this works, we expand it
+# into the full twice-daily pipeline.
+on:
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run scraper
+        run: node src/scrape.js || true
+      - name: Show run summary
+        run: |
+          echo "=== data/last_run.json ==="
+          cat data/last_run.json 2>/dev/null || echo "(no summary written)"
+          echo "=== listings captured ==="
+          node -e "const s=require('./data/listings.json');console.log(Object.keys(s).length,'listings in store')" 2>/dev/null || echo "(no listings.json)"
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrape-result
+          path: |
+            data/last_run.json
+            data/listings.json
+          if-no-files-found: warn

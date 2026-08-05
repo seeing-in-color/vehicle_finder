@@ -419,4 +419,8 @@ const clean = html
   .replace(/(^|[^\uD800-\uDBFF])([\uDC00-\uDFFF])/g, '$1');
 
 fs.writeFileSync(OUT, clean);
-console.log(`Wrote ${OUT} (${active.length} active/pending/sold, ${stale.length} stale)`);
+// Also emit the committed static site that Vercel serves (public/index.html).
+const PUBLIC = path.join(ROOT, 'public', 'index.html');
+fs.mkdirSync(path.dirname(PUBLIC), { recursive: true });
+fs.writeFileSync(PUBLIC, clean);
+console.log(`Wrote ${OUT} and ${PUBLIC} (${active.length} active/pending/sold, ${stale.length} stale)`);
