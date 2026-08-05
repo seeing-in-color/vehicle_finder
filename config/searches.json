@@ -1,0 +1,53 @@
+{
+  "location": {
+    "centerCity": "Austin, TX",
+    "radiusMiles": 250,
+    "hubs": [
+      "austin",
+      "sanantonio",
+      "houston",
+      "dallas",
+      "waco",
+      "corpuschristi",
+      "killeen"
+    ]
+  },
+  "alerts": {
+    "minScoreForAlert": 80
+  },
+  "limits": {
+    "maxNewDetailFetchesPerRun": 25,
+    "maxReverificationsPerRun": 30,
+    "maxPhotosPerListing": 4
+  },
+  "searches": [
+    {
+      "id": "ford-transit-350",
+      "label": "Ford Transit 350",
+      "query": "ford transit 350",
+      "status": "active",
+      "minPrice": 5000,
+      "maxPrice": 21000,
+      "maxMileage": 138000,
+      "yearMin": 2015,
+      "yearMax": null,
+      "titleMustMatch": "transit[\\s-]*350",
+      "titleMustNotMatch": null,
+      "requirements": "MUST be a passenger van (12 or 15 passenger) with MEDIUM or HIGH roof. Low roof is unusable for the business. Cargo/crew/cutaway/box configurations do not fit. Verify roof height and seating from PHOTOS, not the listing title (FB titles are unreliable).",
+      "notes": "For transportation business. Watch for fleet abuse, deferred maintenance, non-functioning equipment, rebuilt/salvage titles."
+    },
+    {
+      "id": "landcruiser-80-series",
+      "label": "Toyota Land Cruiser (80 Series)",
+      "query": "toyota land cruiser",
+      "status": "active",
+      "minPrice": 3000,
+      "maxPrice": 14000,
+      "maxMileage": 200000,
+      "yearMin": 1990,
+      "yearMax": 1997,
+      "titleMustMatch": "land\\s*cruiser",
+      "notes": "80-series only (1990-1997, FJ80/FZJ80). Value factors: factory triple lockers, rust-free frame/body, stock vs modified, maintenance history (head gasket on 1FZ-FE, birfields, knuckle service)."
+    }
+  ]
+}
