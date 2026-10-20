@@ -19,8 +19,8 @@ state defaults to ignored `data/`; `VEHICLE_FINDER_DATA_DIR` can override it.
 - `npm run alerts:prepare` prepares qualifying desktop alerts.
 - `node src/desktop-alerts.js begin ID`, then send the exact prepared text through
   the signed-in Telegram desktop, then `confirm ID "observed delivery evidence"`.
-- `npm run notify` supports the exact identity-verified Swoop bot when configured.
-- `npm run dashboard` builds the private local `dashboard.html`.
+- `npm run notify` prepares the desktop alert queue without credentials.
+- `npm run dashboard` builds the private local `data/dashboard.html`.
 - `npm test` runs authorization, fit, freshness, access-stop and delivery tests.
 
 An alert requires score ≥80, active availability verified within 24h, reviewed
@@ -53,10 +53,10 @@ empty search or unavailable listing.
 ## Privacy and deployment
 
 `data/`, `.env*`, `dashboard.html`, authorization records, photos and delivery logs
-are private local state and must not be committed. Notifications use environment
-credentials only and verify the exact bot/chat before any listing is disclosed.
-The default credential source is the Jarvis Infisical broker; desktop delivery
-uses the existing sign-in when that broker is unavailable.
+are private local state and must not be committed. Notifications use the existing
+signed-in Telegram desktop account and verify the exact Swoop_OS conversation.
+Vehicle Finder does not use Infisical, retrieve bot tokens, or require a secret
+manager. Facebook authentication stays in Chrome.
 
 The existing Vercel project is `vehicle-finder` at
 `vehicle-finder-alpha.vercel.app`. Its static project page does not expose the

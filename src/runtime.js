@@ -30,6 +30,7 @@ function authorize(action, c = config(), now = new Date()) {
   }
   if (!Number.isInteger(a.constraints?.maxAlertsPerRun) || a.constraints.maxAlertsPerRun < 1 || a.constraints.maxAlertsPerRun > 5
       || !Number.isInteger(a.constraints?.maxAlertsPerDay) || a.constraints.maxAlertsPerDay < 1 || a.constraints.maxAlertsPerDay > 10) throw new Error('Authorization alert limits are missing or outside scope.');
+  if (a.delivery?.route === 'telegram_desktop' && ['send_listing_alerts','send_test_message'].includes(action)) throw new Error('Vehicle Finder delivery uses the signed-in Telegram desktop only.');
   if (!a.allowedActions?.includes(action)) throw new Error(`Action outside authorization: ${action}`);
   if (a.searchHash !== searchHash(c)) throw new Error('Search scope changed; update the explicit authorization before running.');
   return a;

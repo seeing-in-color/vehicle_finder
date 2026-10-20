@@ -94,4 +94,16 @@ test('private dashboard build cannot overwrite public project page',()=>{
   execFileSync(process.execPath,[path.join(r.ROOT,'src/dashboard.js')],{env:process.env});
   assert.equal(fs.readFileSync(file,'utf8'),before);assert.ok(fs.existsSync(path.join(tmp,'dashboard.html')));
 });
+test('desktop-only authorization prevents bot delivery without reading credentials',async()=>{
+  reset();saveAuth({...auth(),delivery:{route:'telegram_desktop',secretProviders:[]}});
+  let requests=0;
+  await assert.rejects(run({env:{},request:async()=>{requests++;throw new Error('must not call');},now}),/desktop only/);
+  assert.equal(requests,0);
+  const p=JSON.parse(fs.readFileSync(path.join(r.ROOT,'package.json'),'utf8'));
+  assert.equal(p.scripts.notify,'node src/desktop-alerts.js prepare');
+  const script=path.join(r.ROOT,'src/desktop-alerts.js');
+  const result=execFileSync(process.execPath,[script,'prepare'],{encoding:'utf8',env:process.env});
+  assert.equal(JSON.parse(result).length,1);
+  assert.equal(r.readJSON(path.join(tmp,'deliveries.json'))['111'].status,'ready');
+});
 test.after(()=>fs.rmSync(tmp,{recursive:true,force:true}));

@@ -55,11 +55,11 @@ OpenAI API keys or third-party paid scraping APIs are used.
    outgoing message, listing ID, time and delivered checkmark"`. On an uncertain
    send, record `uncertain` with evidence and inspect history before any recovery.
    Never blindly retry. Do not send unrelated status messages to the group.
-8. Optional bot route: the Infisical broker supplies only the exact
-   `SWOOP_TELEGRAM_BOT_TOKEN` and `SWOOP_TELEGRAM_CHAT_ID` for an approved process.
-   Pin the verified bot ID, username, chat ID and title in private authorization
-   first. `node src/notify.js` checks getMe/getChat before sending. It never
-   loads .env, substitutes another bot, or auto-retries an uncertain send.
+8. Use the existing signed-in Telegram desktop account for delivery. The owner
+   explicitly disabled Infisical for Vehicle Finder. Do not call the broker,
+   read/import secrets, retry its setup, or retrieve bot credentials from any
+   source. Chrome and Telegram retain their existing sign-in sessions. The
+   `npm run notify` command prepares the desktop queue and requires no token.
 9. `node src/dashboard.js` updates the PRIVATE local dashboard. Do not commit or
    upload listing observations, photos, analyses, authorization or delivery logs.
    The public Vercel page is a static project page, not the private live store.

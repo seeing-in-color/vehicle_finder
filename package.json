@@ -6,8 +6,7 @@
     "scrape": "node src/scrape.js",
     "dashboard": "node src/dashboard.js",
     "apply-analysis": "node src/apply-analysis.js",
-    "notify": "node src/notify.js",
-    "notify-test": "node src/notify.js --test",
+    "notify": "node src/desktop-alerts.js prepare",
     "test": "node --test",
     "collect": "node src/collect.js",
     "alerts:prepare": "node src/desktop-alerts.js prepare"
