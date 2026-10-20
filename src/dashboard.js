@@ -8,11 +8,12 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const ROOT = path.join(__dirname, '..');
+const { ROOT, DATA_DIR, authorize, config: loadConfig } = require('./runtime');
+authorize('build_private_dashboard', loadConfig());
 const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'searches.json'), 'utf8'));
-const store = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'listings.json'), 'utf8'));
-const OUT = path.join(ROOT, 'dashboard.html');
-const THUMB_DIR = path.join(ROOT, 'data', 'thumbs');
+const store = require('./runtime').readJSON(path.join(DATA_DIR, 'listings.json'), {});
+const OUT = path.join(DATA_DIR, 'dashboard.html');
+const THUMB_DIR = path.join(DATA_DIR, 'thumbs');
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const money = (n) => (n == null ? '—' : '$' + n.toLocaleString());
@@ -418,9 +419,6 @@ const clean = html
   .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/g, '')
   .replace(/(^|[^\uD800-\uDBFF])([\uDC00-\uDFFF])/g, '$1');
 
-fs.writeFileSync(OUT, clean);
-// Also emit the committed static site that Vercel serves (public/index.html).
-const PUBLIC = path.join(ROOT, 'public', 'index.html');
-fs.mkdirSync(path.dirname(PUBLIC), { recursive: true });
-fs.writeFileSync(PUBLIC, clean);
-console.log(`Wrote ${OUT} and ${PUBLIC} (${active.length} active/pending/sold, ${stale.length} stale)`);
+fs.mkdirSync(DATA_DIR, {recursive:true,mode:0o700});
+fs.writeFileSync(OUT, clean, {mode:0o600});
+console.log(`Wrote private ${OUT} (${active.length} active/pending/sold, ${stale.length} stale)`);

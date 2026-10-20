@@ -1,4 +1,7 @@
 node_modules/
 data/
-.env
+.env*
+!.env.example
 dashboard.html
+*.authorization.json
+.vercel/

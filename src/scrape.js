@@ -14,18 +14,23 @@
 
 const fs = require('fs');
 const path = require('path');
+const { authorize, config: loadConfig, scrubAIEnvironment, DATA_DIR: PRIVATE_DATA } = require('./runtime');
+scrubAIEnvironment();
+authorize('scrape_logged_out_marketplace', loadConfig());
+const { assertAccess } = require('./access');
 const { chromium } = require('playwright');
 
 const ROOT = path.join(__dirname, '..');
 const CONFIG_PATH = path.join(ROOT, 'config', 'searches.json');
-const DATA_DIR = path.join(ROOT, 'data');
+const DATA_DIR = PRIVATE_DATA;
 const IMAGES_DIR = path.join(DATA_DIR, 'images');
 const LISTINGS_PATH = path.join(DATA_DIR, 'listings.json');
 
-const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36';
+
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const jitter = (min, max) => Math.floor(min + Math.random() * (max - min));
+// Fixed, low-volume pacing; never disguise automation or defeat a challenge.
+const jitter = (_min, max) => max;
 
 function loadJSON(p, fallback) {
   try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return fallback; }
@@ -68,7 +73,6 @@ function extractMileage(text) {
 
 async function newContext(browser) {
   const ctx = await browser.newContext({
-    userAgent: UA,
     viewport: { width: 1366, height: 900 },
     locale: 'en-US',
     timezoneId: 'America/Chicago',
@@ -87,8 +91,9 @@ async function scrapeSearchPage(page, hub, search) {
   if (search.minPrice) params.set('minPrice', String(search.minPrice));
   if (search.maxPrice) params.set('maxPrice', String(search.maxPrice));
   const url = `https://www.facebook.com/marketplace/${hub}/search?${params.toString()}`;
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
   await sleep(jitter(2500, 4500));
+  await assertAccess(page, response);
   // Scroll to trigger lazy loading of more results.
   for (let i = 0; i < 3; i++) {
     await page.mouse.wheel(0, 1800);
@@ -144,8 +149,9 @@ function saleState(text) {
 }
 
 async function scrapeDetail(page, url) {
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
   await sleep(jitter(2500, 4000));
+  await assertAccess(page, response);
   // Expand truncated description if a "See more" toggle is present.
   try {
     const seeMore = page.locator('span:text-is("See more")').first();
@@ -204,7 +210,7 @@ async function downloadPhotos(listing, maxPhotos) {
   const saved = [];
   for (const [i, url] of (listing.photoUrls || []).slice(0, maxPhotos).entries()) {
     try {
-      const res = await fetch(url, { headers: { 'User-Agent': UA } });
+      const res = await fetch(url);
       if (!res.ok) continue;
       const buf = Buffer.from(await res.arrayBuffer());
       if (buf.length < 5000) continue; // skip icons/blank tiles
@@ -289,6 +295,7 @@ async function main() {
             if (c && !candidates.has(c.id)) { candidates.set(c.id, c); summary.searches[search.id].matched++; }
           }
         } catch (e) {
+          if (e.accessBlocked) throw e;
           summary.errors.push(`search ${search.id}@${hub}: ${e.message}`);
         }
         await sleep(jitter(3000, 6000));
@@ -328,6 +335,7 @@ async function main() {
         store[listing.id] = listing;
         summary.newListings.push(listing.id);
       } catch (e) {
+        if (e.accessBlocked) throw e;
         summary.errors.push(`detail ${cand.id}: ${e.message}`);
       }
       await sleep(jitter(3000, 6000));
@@ -371,6 +379,7 @@ async function main() {
           }
         }
       } catch (e) {
+        if (e.accessBlocked) throw e;
         summary.errors.push(`verify ${listing.id}: ${e.message}`);
       }
       await sleep(jitter(3000, 6000));
@@ -384,4 +393,7 @@ async function main() {
   console.log(JSON.stringify(summary, null, 2));
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  saveJSON(path.join(DATA_DIR,'last_run.json'), {ranAt:new Date().toISOString(),blocked:!!e.accessBlocked,error:e.accessBlocked?e.message:'Collection failed; inspect local runtime.'});
+  console.error(e.message);process.exitCode=1;
+});
